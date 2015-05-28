@@ -1,7 +1,10 @@
 package com.artitk.okhttpexample;
 
+import android.app.DownloadManager;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -10,6 +13,8 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
@@ -80,7 +85,59 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
     }
 
     private void callSyncGet() {
-        // TODO : Implement Sync Get
+        new AsyncTask<Void, Void, Message>() {
+            @Override
+            protected void onPreExecute() {
+                resetView();
+
+                super.onPreExecute();
+            }
+
+            @Override
+            protected Message doInBackground(Void... voids) {
+                OkHttpClient okHttpClient = new OkHttpClient();
+
+                Request.Builder builder = new Request.Builder();
+                Request request = builder.url(TEST_URL).build();
+
+                Message message = new Message();
+
+                try {
+                    Response response = okHttpClient.newCall(request).execute();
+                    if (response.isSuccessful()) {
+                        message.what = 1;
+                        message.obj  = response;
+                    } else {
+                        message.what = 0;
+                        message.obj  = "Not Success\ncode : " + response.code();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    message.what = 0;
+                    message.obj  = "Error\n" + e.getMessage();
+                }
+
+                return message;
+            }
+
+            @Override
+            protected void onPostExecute(Message message) {
+                super.onPostExecute(message);
+
+                switch (message.what) {
+                    case 0:
+                        textResult.setText((String) message.obj);
+                        break;
+                    case 1:
+                        response = (Response) message.obj;
+                        break;
+                }
+
+                showView();
+
+                message.recycle();
+            }
+        }.execute();
     }
 
     private void callASyncGet() {
