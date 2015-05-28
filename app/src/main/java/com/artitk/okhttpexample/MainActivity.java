@@ -1,5 +1,6 @@
 package com.artitk.okhttpexample;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -16,10 +17,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String[] lists = new String[] {
-                "Synchronous Get",
-                "Asynchronous Get"
-        };
+        String[] lists = getResources().getStringArray(R.array.menu_list);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, lists);
 
@@ -52,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-        // TODO : Send position to new activity
+        Intent intent = new Intent(this, ResultActivity.class);
+        intent.putExtra("menu index", position);
+        startActivity(intent);
     }
 }
