@@ -9,12 +9,21 @@ import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.Response;
+
+import java.io.IOException;
+
 public class ResultActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener {
 
     private RadioButton radioHeader;
     private RadioButton radioBody;
     private ProgressBar progressBar;
     private TextView textResult;
+
+    private static final String TEST_URL = "http://graph.facebook.com/zuck";
+
+    private Response response;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,16 +54,25 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         if (!isChecked) return;
+        if (response == null) return;
 
-        String result = null;
+        String result = "";
 
         int viewId = buttonView.getId();
         switch (viewId) {
             case R.id.radioHeader:
-                result = "Result from Header";  // TODO : Implement get store result
+                Headers headers = response.headers();
+                for (String header : headers.names()) {
+                    result += "name : " + header + "\n\tvalue :" + headers.get(header) + "\n";
+                }
                 break;
             case R.id.radioBody:
-                result = "Result from Body";    // TODO : Implement get store result
+                try {
+                    result = response.body().string();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    result = "Error !\n\n" + e.getMessage();
+                }
                 break;
         }
 
@@ -71,19 +89,20 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
 
     private void resetView() {
         radioHeader.setEnabled(false);
-        radioHeader.setChecked(true);
+        radioHeader.setChecked(false);
         radioBody.setEnabled(false);
+        radioBody.setChecked(false);
         progressBar.setVisibility(View.VISIBLE);
         textResult.setVisibility(View.GONE);
         textResult.setText("");
     }
 
-    private void showView(String result) {
+    private void showView() {
         radioHeader.setEnabled(true);
         radioBody.setEnabled(true);
         progressBar.setVisibility(View.GONE);
         textResult.setVisibility(View.VISIBLE);
-        textResult.setText(result);
+        radioHeader.setChecked(true);
     }
 
 }
