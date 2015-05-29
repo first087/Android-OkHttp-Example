@@ -9,7 +9,10 @@ import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
@@ -84,7 +87,31 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
     }
 
     private void callASyncGet() {
-        // TODO : Implement Async Get
+        resetView();
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+
+        Request request = new Request.Builder().url(TEST_URL).build();
+
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                textResult.setText("Error! " + e.getMessage());
+                showView();
+            }
+
+            @Override
+            public void onResponse(Response response) {
+                ResultActivity.this.response = response;
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showView();
+                    }
+                });
+            }
+        });
     }
 
     private void resetView() {
