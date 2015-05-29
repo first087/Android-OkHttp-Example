@@ -1,6 +1,5 @@
 package com.artitk.okhttpexample;
 
-import android.app.DownloadManager;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -29,7 +28,8 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
 
     private static final String TEST_URL = "http://graph.facebook.com/zuck";
 
-    private Response response;
+    private String dataHeader;
+    private String dataBody;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,26 +60,13 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         if (!isChecked) return;
-        if (response == null) return;
 
-        String result = "";
+        String result = null;
 
         int viewId = buttonView.getId();
         switch (viewId) {
-            case R.id.radioHeader:
-                Headers headers = response.headers();
-                for (String header : headers.names()) {
-                    result += "name : " + header + "\n\tvalue :" + headers.get(header) + "\n";
-                }
-                break;
-            case R.id.radioBody:
-                try {
-                    result = response.body().string();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    result = "Error !\n\n" + e.getMessage();
-                }
-                break;
+            case R.id.radioHeader:  result = dataHeader;    break;
+            case R.id.radioBody:    result = dataBody;      break;
         }
 
         textResult.setText(result);
@@ -127,10 +114,10 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
 
                 switch (message.what) {
                     case 0:
-                        textResult.setText((String) message.obj);
+                        dataBody = (String) message.obj;
                         break;
                     case 1:
-                        response = (Response) message.obj;
+                        getResponseData((Response) message.obj);
                         break;
                 }
 
@@ -146,19 +133,29 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
 
         OkHttpClient okHttpClient = new OkHttpClient();
 
-        Request request = new Request.Builder().url(TEST_URL).build();
+        Request.Builder builder = new Request.Builder();
+        Request request = builder.url(TEST_URL).build();
 
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Request request, IOException e) {
-                textResult.setText("Error! " + e.getMessage());
-                showView();
+                dataBody = "Error\n" + e.getMessage();
+
+                updateView();
             }
 
             @Override
             public void onResponse(Response response) {
-                ResultActivity.this.response = response;
+                if (response.isSuccessful()) {
+                    getResponseData(response);
+                } else {
+                    dataBody = "Not Success\ncode : " + response.code();
+                }
 
+                updateView();
+            }
+
+            public void updateView() {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -169,7 +166,24 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
         });
     }
 
+    private void getResponseData(Response response) {
+        Headers headers = response.headers();
+        for (String header : headers.names()) {
+            dataHeader += "name : " + header + "\n\tvalue :" + headers.get(header) + "\n";
+        }
+
+        try {
+            dataBody = response.body().string();
+        } catch (IOException e) {
+            e.printStackTrace();
+            dataBody = "Error !\n\n" + e.getMessage();
+        }
+    }
+
     private void resetView() {
+        dataHeader = "";
+        dataBody   = "";
+
         radioHeader.setEnabled(false);
         radioHeader.setChecked(false);
         radioBody.setEnabled(false);
@@ -182,9 +196,8 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
     private void showView() {
         radioHeader.setEnabled(true);
         radioBody.setEnabled(true);
+        radioBody.setChecked(true);
         progressBar.setVisibility(View.GONE);
         textResult.setVisibility(View.VISIBLE);
-        radioHeader.setChecked(true);
     }
-
 }
