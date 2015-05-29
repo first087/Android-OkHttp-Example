@@ -53,6 +53,7 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
         switch (menuIndex) {
             case 0: callSyncGet();      break;  // Synchronous Get
             case 1: callASyncGet();     break;  // Asynchronous Get
+            case 2: callAccessHeader(); break;  // Accessing Headers
             // TODO : Add other case
         }
     }
@@ -135,6 +136,49 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
 
         Request.Builder builder = new Request.Builder();
         Request request = builder.url(TEST_URL).build();
+
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                dataBody = "Error\n" + e.getMessage();
+
+                updateView();
+            }
+
+            @Override
+            public void onResponse(Response response) {
+                if (response.isSuccessful()) {
+                    getResponseData(response);
+                } else {
+                    dataBody = "Not Success\ncode : " + response.code();
+                }
+
+                updateView();
+            }
+
+            public void updateView() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showView();
+                    }
+                });
+            }
+        });
+    }
+
+    private void callAccessHeader() {
+        resetView();
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+
+        Request.Builder builder = new Request.Builder();
+        Request request = builder
+                .url("https://api.github.com/repos/square/okhttp/issues")
+                .header("User-Agent", "OkHttp Headers.java")
+                .addHeader("Accept", "application/json; q=0.5")
+                .addHeader("Accept", "application/vnd.github.v3+json")
+                .build();
 
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
