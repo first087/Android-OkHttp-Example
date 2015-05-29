@@ -1,7 +1,9 @@
 package com.artitk.okhttpexample;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -9,12 +11,25 @@ import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
+import java.io.IOException;
+
 public class ResultActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener {
 
     private RadioButton radioHeader;
     private RadioButton radioBody;
     private ProgressBar progressBar;
     private TextView textResult;
+
+    private static final String TEST_URL = "http://graph.facebook.com/zuck";
+
+    private String dataHeader;
+    private String dataBody;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,40 +65,139 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
 
         int viewId = buttonView.getId();
         switch (viewId) {
-            case R.id.radioHeader:
-                result = "Result from Header";  // TODO : Implement get store result
-                break;
-            case R.id.radioBody:
-                result = "Result from Body";    // TODO : Implement get store result
-                break;
+            case R.id.radioHeader:  result = dataHeader;    break;
+            case R.id.radioBody:    result = dataBody;      break;
         }
 
         textResult.setText(result);
     }
 
     private void callSyncGet() {
-        // TODO : Implement Sync Get
+        new AsyncTask<Void, Void, Message>() {
+            @Override
+            protected void onPreExecute() {
+                resetView();
+
+                super.onPreExecute();
+            }
+
+            @Override
+            protected Message doInBackground(Void... voids) {
+                OkHttpClient okHttpClient = new OkHttpClient();
+
+                Request.Builder builder = new Request.Builder();
+                Request request = builder.url(TEST_URL).build();
+
+                Message message = new Message();
+
+                try {
+                    Response response = okHttpClient.newCall(request).execute();
+                    if (response.isSuccessful()) {
+                        message.what = 1;
+                        message.obj  = response;
+                    } else {
+                        message.what = 0;
+                        message.obj  = "Not Success\ncode : " + response.code();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    message.what = 0;
+                    message.obj  = "Error\n" + e.getMessage();
+                }
+
+                return message;
+            }
+
+            @Override
+            protected void onPostExecute(Message message) {
+                super.onPostExecute(message);
+
+                switch (message.what) {
+                    case 0:
+                        dataBody = (String) message.obj;
+                        break;
+                    case 1:
+                        getResponseData((Response) message.obj);
+                        break;
+                }
+
+                showView();
+
+                message.recycle();
+            }
+        }.execute();
     }
 
     private void callASyncGet() {
-        // TODO : Implement Async Get
+        resetView();
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+
+        Request.Builder builder = new Request.Builder();
+        Request request = builder.url(TEST_URL).build();
+
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                dataBody = "Error\n" + e.getMessage();
+
+                updateView();
+            }
+
+            @Override
+            public void onResponse(Response response) {
+                if (response.isSuccessful()) {
+                    getResponseData(response);
+                } else {
+                    dataBody = "Not Success\ncode : " + response.code();
+                }
+
+                updateView();
+            }
+
+            public void updateView() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showView();
+                    }
+                });
+            }
+        });
+    }
+
+    private void getResponseData(Response response) {
+        Headers headers = response.headers();
+        for (String header : headers.names()) {
+            dataHeader += "name : " + header + "\n\tvalue :" + headers.get(header) + "\n";
+        }
+
+        try {
+            dataBody = response.body().string();
+        } catch (IOException e) {
+            e.printStackTrace();
+            dataBody = "Error !\n\n" + e.getMessage();
+        }
     }
 
     private void resetView() {
+        dataHeader = "";
+        dataBody   = "";
+
         radioHeader.setEnabled(false);
-        radioHeader.setChecked(true);
+        radioHeader.setChecked(false);
         radioBody.setEnabled(false);
+        radioBody.setChecked(false);
         progressBar.setVisibility(View.VISIBLE);
         textResult.setVisibility(View.GONE);
         textResult.setText("");
     }
 
-    private void showView(String result) {
+    private void showView() {
         radioHeader.setEnabled(true);
         radioBody.setEnabled(true);
+        radioBody.setChecked(true);
         progressBar.setVisibility(View.GONE);
         textResult.setVisibility(View.VISIBLE);
-        textResult.setText(result);
     }
-
 }
