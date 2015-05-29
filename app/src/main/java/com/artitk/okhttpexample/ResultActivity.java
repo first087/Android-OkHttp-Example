@@ -213,7 +213,7 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
     private void getResponseData(Response response) {
         Headers headers = response.headers();
         for (String header : headers.names()) {
-            dataHeader += "name : " + header + "\n\tvalue :" + headers.get(header) + "\n";
+            dataHeader += "name : " + header + "\n+ value : " + headers.get(header) + "\n";
         }
 
         try {
