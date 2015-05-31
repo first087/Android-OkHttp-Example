@@ -28,8 +28,6 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
     private ProgressBar progressBar;
     private TextView textResult;
 
-    private static final String TEST_URL = "http://graph.facebook.com/zuck";
-
     private String dataHeader;
     private String dataBody;
 
@@ -90,7 +88,7 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
                 OkHttpClient okHttpClient = new OkHttpClient();
 
                 Request.Builder builder = new Request.Builder();
-                Request request = builder.url(TEST_URL).build();
+                Request request = builder.url("http://date.jsontest.com/").build();
 
                 Message message = new Message();
 
@@ -138,7 +136,7 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
         OkHttpClient okHttpClient = new OkHttpClient();
 
         Request.Builder builder = new Request.Builder();
-        Request request = builder.url(TEST_URL).build();
+        Request request = builder.url("http://md5.jsontest.com/?text=https://github.com/first087/Android-OkHttp-Example").build();
 
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
