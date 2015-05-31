@@ -13,8 +13,10 @@ import android.widget.TextView;
 
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
@@ -54,6 +56,7 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
             case 0: callSyncGet();      break;  // Synchronous Get
             case 1: callASyncGet();     break;  // Asynchronous Get
             case 2: callAccessHeader(); break;  // Accessing Headers
+            case 3: callPostString();   break;  // Posting a String
             // TODO : Add other case
         }
     }
@@ -178,6 +181,56 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
                 .header("User-Agent", "OkHttp Headers.java")
                 .addHeader("Accept", "application/json; q=0.5")
                 .addHeader("Accept", "application/vnd.github.v3+json")
+                .build();
+
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                dataBody = "Error\n" + e.getMessage();
+
+                updateView();
+            }
+
+            @Override
+            public void onResponse(Response response) {
+                if (response.isSuccessful()) {
+                    getResponseData(response);
+                } else {
+                    dataBody = "Not Success\ncode : " + response.code();
+                }
+
+                updateView();
+            }
+
+            public void updateView() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showView();
+                    }
+                });
+            }
+        });
+    }
+
+    private void callPostString() {
+        resetView();
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+
+        MediaType mediaType = MediaType.parse("text/x-markdown; charset=utf-8");
+        String postBody = ""
+                + "Releases\n"
+                + "--------\n"
+                + "\n"
+                + " * _1.0_ May 6, 2013\n"
+                + " * _1.1_ June 15, 2013\n"
+                + " * _1.2_ August 11, 2013\n";
+
+        Request.Builder builder = new Request.Builder();
+        Request request = builder
+                .url("https://api.github.com/markdown/raw")
+                .post(RequestBody.create(mediaType, postBody))
                 .build();
 
         okHttpClient.newCall(request).enqueue(new Callback() {

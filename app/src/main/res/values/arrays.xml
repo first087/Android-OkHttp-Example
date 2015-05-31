@@ -5,6 +5,7 @@
         <item>Synchronous Get</item>
         <item>Asynchronous Get</item>
         <item>Accessing Headers</item>
+        <item>Posting a String</item>
     </string-array>
 
 </resources>
