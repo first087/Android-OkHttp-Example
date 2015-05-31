@@ -54,6 +54,7 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
             case 0: callSyncGet();      break;  // Synchronous Get
             case 1: callASyncGet();     break;  // Asynchronous Get
             case 2: callAccessHeader(); break;  // Accessing Headers
+            case 3: callPostString();   break;  // Posting a String
             // TODO : Add other case
         }
     }
@@ -208,6 +209,10 @@ public class ResultActivity extends AppCompatActivity implements CompoundButton.
                 });
             }
         });
+    }
+
+    private void callPostString() {
+        // TODO : Posting a String
     }
 
     private void getResponseData(Response response) {
